@@ -6,6 +6,8 @@ public class MinimapLinesRenderer : MonoBehaviour
 {
     public GameObject m_linePrefab;
     public Transform m_container;
+
+    public float m_tilingFactor = 4;
     
     private readonly List<LineRenderer> m_lineRenderers= new List<LineRenderer>();
 
@@ -22,13 +24,18 @@ public class MinimapLinesRenderer : MonoBehaviour
 
         for (var i = 0; i < _neighborSites.Count; i++)
         {
+            var startPosition = new Vector3(_arg0Coord.x, _arg0Coord.y);
+            var endPosition = new Vector3(_neighborSites[i].Coord.x, _neighborSites[i].Coord.y);
+            
             m_lineRenderers[i].SetPositions(new[]
             {
-                new Vector3(_arg0Coord.x,_arg0Coord.y),
-                new Vector3(_neighborSites[i].Coord.x,_neighborSites[i].Coord.y),
+                startPosition,
+                endPosition,
             });
+            
+            var lineLength = Vector3.Distance(startPosition, endPosition); 
             m_lineRenderers[i].enabled = true;
-            //m_lineRenderers[i].materials[0].mainTextureScale
+            m_lineRenderers[i].materials[0].mainTextureScale = new Vector2(lineLength*m_tilingFactor, 1);
         }
     }
 

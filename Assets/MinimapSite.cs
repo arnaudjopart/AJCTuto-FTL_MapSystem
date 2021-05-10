@@ -13,6 +13,7 @@ public class MinimapSite: MonoBehaviour
     private void Awake()
     {
         m_onHoverAnim.SetActive(false);
+        
         m_onMouseEnterEvent = new SiteSelectionEvent();
         m_onMouseExitEvent = new SiteSelectionEvent();
     }
@@ -27,16 +28,6 @@ public class MinimapSite: MonoBehaviour
     {
         m_onMouseExitEvent.Invoke(null);
         m_onHoverAnim.SetActive(false);
-    }
-
-    public void StartHighlight()
-    {
-        GetComponent<MeshRenderer>().materials[0].color = Color.yellow;
-    }
-    
-    public void StopHighlight()
-    {
-        GetComponent<MeshRenderer>().materials[0].color = Color.white;
     }
 }
 

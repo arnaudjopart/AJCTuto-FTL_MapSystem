@@ -10,13 +10,15 @@ public class Minimap : MonoBehaviour
 {
     [Header("Main Camera")]
     public Camera m_camera;
-
+    
     [Header("Map Generation Info")] 
     public int m_nbOfSites;
     public string m_customSeed;
     public bool m_useCustomSeed;
     public Vector2 m_minimapBorders;
     public int m_lloydIterations;
+    
+    [Header("Prefabs And Container")]
     public GameObject m_sitePrefab;
     public Transform m_container;
 
@@ -35,14 +37,14 @@ public class Minimap : MonoBehaviour
 
     private void CreateMap()
     {
-        MapData mapData = CalculateMinimapSize(m_camera, m_minimapBorders);
+        MapData mapData = CreateMinimapArea(m_camera, m_minimapBorders);
         string seed = GenerateSeed(m_customSeed, m_useCustomSeed);
         var sites = GenerateSites(m_nbOfSites, seed, mapData);
         
         m_sitesDictionary = GenerateMinimap(sites,mapData);
     }
 
-    private static MapData CalculateMinimapSize(Camera _camera, Vector2 _minimapBorder)
+    private static MapData CreateMinimapArea(Camera _camera, Vector2 _minimapBorder)
     {
         var mapData = new MapData();
         
@@ -66,6 +68,7 @@ public class Minimap : MonoBehaviour
     {
         var minimapZone = new Rectf(_mapData.m_bottomLeftCorner.x, _mapData.m_bottomLeftCorner.y, _mapData.m_size.x, _mapData.m_size.y);
         var diagram = new Voronoi(_sites, minimapZone,m_lloydIterations);
+        
         var voronoiSites = diagram.SitesIndexedByLocation;
         voronoiSites = voronoiSites.OrderBy(obj => obj.Key.x).ToDictionary(obj => obj.Key, obj => obj.Value);
         
@@ -90,27 +93,15 @@ public class Minimap : MonoBehaviour
         return sitesDictionary;
     }
 
-    private void HandleSiteDeselection(Site _arg0)
+    private void HandleSiteDeselection(Site _selectedSite)
     {
-        foreach (var VARIABLE in m_sitesDictionary)
-        {
-            VARIABLE.Value.StopHighlight();
-        }
         m_minimapLinesRenderer.HideAllLines();
     }
 
-    private void HandleSiteSelection(Site _arg0)
+    private void HandleSiteSelection(Site _selectedSite)
     {
-        var neighborSites = _arg0.NeighborSites();
-        foreach (var VARIABLE in neighborSites)
-        {
-            if(m_sitesDictionary.TryGetValue(VARIABLE.Coord, out var result))
-            {
-                result.StartHighlight();
-                
-            }
-        }
-        m_minimapLinesRenderer.DrawLines(_arg0.Coord, neighborSites);
+        var neighborSites = _selectedSite.NeighborSites();
+        m_minimapLinesRenderer.DrawLines(_selectedSite.Coord, neighborSites);
     }
 
     private void Clear()
