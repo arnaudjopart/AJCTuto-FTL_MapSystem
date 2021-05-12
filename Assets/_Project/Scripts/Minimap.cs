@@ -11,10 +11,10 @@ namespace _Project.Scripts
         [Header("Main Camera")]
         public Camera m_camera;
     
-        [Header("Map Generation Info")] 
-        public int m_nbOfSites;
-        public string m_customSeed;
-        public bool m_useCustomSeed;
+        [Header("Map Generation parameters")] 
+        public int m_numberOfSites;
+        public string m_currentSeed;
+        public bool m_keepCurrentSeed;
         public Vector2 m_minimapBorders;
         public int m_lloydIterations;
     
@@ -45,8 +45,8 @@ namespace _Project.Scripts
         private void CreateMap()
         {
             MapData mapData = CreateMinimapArea(m_camera, m_minimapBorders);
-            string seed = GenerateSeed(m_customSeed, m_useCustomSeed);
-            var sites = GenerateSites(m_nbOfSites, seed, mapData);
+            m_currentSeed = GenerateSeed(m_currentSeed, m_keepCurrentSeed);
+            List<Vector2f> sites = GenerateSites(m_numberOfSites, m_currentSeed, mapData);
         
             m_sitesDictionary = GenerateMinimap(sites,mapData);
         }
@@ -58,7 +58,7 @@ namespace _Project.Scripts
             var bottomLeftCorner = _camera.ViewportToWorldPoint(new Vector2(0, 0))+ new Vector3(_minimapBorder.x,_minimapBorder.y);
             bottomLeftCorner.z = 0;
 
-            var topRightCorner = _camera.ViewportToWorldPoint(new Vector2(1, 1))+ new Vector3(-_minimapBorder.x,-_minimapBorder.y);;
+            var topRightCorner = _camera.ViewportToWorldPoint(new Vector2(1, 1))+ new Vector3(-_minimapBorder.x,-_minimapBorder.y);
             topRightCorner.z = 0;
 
             mapData.m_startPosition = bottomLeftCorner;
@@ -114,7 +114,6 @@ namespace _Project.Scripts
                 uiSite.m_onMouseEnterEvent.AddListener(HandleSiteSelection);
                 uiSite.m_onMouseExitEvent.AddListener(HandleSiteDeselection);
                 uiSite.m_diagramSite = site.Value;
-            
                 uiSite.gameObject.name = "MinimapSite_" + i;
                 sitesDictionary.Add(sitePosition, uiSite);
                 i++;
@@ -122,27 +121,18 @@ namespace _Project.Scripts
 
             return sitesDictionary;
         }
-
-        private void HandleSiteDeselection(Site _selectedSite)
-        {
-            m_minimapLinesRenderer.HideAllLines();
-        }
-
+        
         private void HandleSiteSelection(Site _selectedSite)
         {
             var neighborSites = _selectedSite.NeighborSites();
             m_minimapLinesRenderer.DrawLines(_selectedSite.Coord, neighborSites);
         }
-
-        private void Clear()
+        
+        private void HandleSiteDeselection(Site _selectedSite)
         {
-            foreach (var VARIABLE in m_sitesDictionary)
-            {
-                Destroy(VARIABLE.Value.gameObject);
-            }
-            m_sitesDictionary.Clear();
+            m_minimapLinesRenderer.HideAllLines();
         }
-    
+        
         private void Update()
         {
             if (Input.GetKeyDown(KeyCode.Space))
@@ -152,6 +142,16 @@ namespace _Project.Scripts
             }
         }
 
+        private void Clear()
+        {
+            m_minimapLinesRenderer.HideAllLines();
+            foreach (var VARIABLE in m_sitesDictionary)
+            {
+                Destroy(VARIABLE.Value.gameObject);
+            }
+            m_sitesDictionary.Clear();
+        }
+        
         private void OnDrawGizmos()
         {
             var bottomLeftCorner = m_camera.ViewportToWorldPoint(new Vector2(0, 0))+ new Vector3(m_minimapBorders.x,m_minimapBorders.y);
@@ -160,7 +160,7 @@ namespace _Project.Scripts
             bottomRightCorner.z = 0;
             var topLeftCorner = m_camera.ViewportToWorldPoint(new Vector2(0, 1))+ new Vector3(m_minimapBorders.x,-m_minimapBorders.y);
             topLeftCorner.z = 0;
-            var topRightCorner = m_camera.ViewportToWorldPoint(new Vector2(1, 1))+ new Vector3(-m_minimapBorders.x,-m_minimapBorders.y);;
+            var topRightCorner = m_camera.ViewportToWorldPoint(new Vector2(1, 1))+ new Vector3(-m_minimapBorders.x,-m_minimapBorders.y);
             topRightCorner.z = 0;
         
             const float sphereRadius = .2f;
@@ -178,6 +178,4 @@ namespace _Project.Scripts
             Gizmos.DrawLine(bottomRightCorner,topRightCorner);
         }
     }
-
-    
 }
