@@ -20,13 +20,10 @@ namespace _Project.Scripts
         [Range(0f,.5f)]
         public float m_heightMargin;
         public int m_relaxationCycles = 1;
-
-
+        
         [Header("Visualizer Options")] 
         public bool m_showVisualizer;
-        public bool m_generateCells;
-        public bool m_generateSitesPosition;
-        
+
         [Header("Prefabs And Container")]
         public GameObject m_sitePrefab;
         public Transform m_container;
@@ -55,14 +52,14 @@ namespace _Project.Scripts
         private void CreateMap()
         {
             m_mapData = CreateMinimapArea(m_camera, m_widthMargin,m_heightMargin);
-            m_currentSeed = GenerateSeed(m_currentSeed, m_keepCurrentSeed);
+
+            m_currentSeed = m_keepCurrentSeed && !string.IsNullOrEmpty(m_currentSeed) ? m_currentSeed : GenerateSeed();
+            
             List<Vector2> sites = GenerateSites(m_numberOfSites, m_currentSeed, m_mapData);
         
             m_sitesList = GenerateMinimap(sites,m_mapData);
         }
-
         
-
         private static MapData CreateMinimapArea(Camera _camera, float _widthMargin,float _heightMargin)
         {
             var mapData = new MapData();
@@ -80,9 +77,8 @@ namespace _Project.Scripts
             return mapData;
         }
         
-        private static string GenerateSeed(string _customSeed, bool _useCustomSeed)
+        private static string GenerateSeed()
         {
-            if (_useCustomSeed && !string.IsNullOrEmpty(_customSeed)) return _customSeed;
             return (Time.time + Random.Range(0, 100)).ToString(CultureInfo.InvariantCulture);
         }
         
@@ -105,48 +101,31 @@ namespace _Project.Scripts
 
         private List<GameObject> GenerateMinimap(List<Vector2> _sites, MapData _mapData)
         {
-
             var widthInPixel = (int)_mapData.m_size.x;
             var heightInPixel = (int) _mapData.m_size.y;
             
             m_diagram = new VoronoiDiagram<Color>(new Rect(0,0, widthInPixel, heightInPixel));
             
-            var texturePoints = new List<VoronoiDiagramSite<Color>>();
+            var voronoiDiagramSites = new List<VoronoiDiagramSite<Color>>();
 
             foreach (var site in _sites)
             {
                 var color = new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
-                texturePoints.Add(new VoronoiDiagramSite<Color>(site, color));
+                voronoiDiagramSites.Add(new VoronoiDiagramSite<Color>(site, color));
             }
             
-            m_diagram.AddSites(texturePoints);
+            m_diagram.AddSites(voronoiDiagramSites);
             m_diagram.GenerateSites(m_relaxationCycles);
 
-            var outImg = new Texture2D(
-                widthInPixel, 
-                heightInPixel);
+            var outImg = new Texture2D(widthInPixel, heightInPixel);
             
-            if (m_generateCells)
-            {
-                outImg.SetPixels(m_diagram.Get1DSampleArray().ToArray());
-            }
+            outImg.SetPixels(m_diagram.Get1DSampleArray().ToArray());
             
             var index = 0;
             var list = new List<GameObject>();
             
             foreach (var generatedSiteKeyValuePair in m_diagram.GeneratedSites)
             {
-                if (m_generateSitesPosition)
-                {
-                    for (var i = (int) generatedSiteKeyValuePair.Value.Coordinate.x - 10; i < (int) generatedSiteKeyValuePair.Value.Coordinate.x + 10; i++)
-                    {
-                        for (var j = (int) generatedSiteKeyValuePair.Value.Coordinate.y - 10; j < (int) generatedSiteKeyValuePair.Value.Coordinate.y + 10; j++)
-                        {
-                            outImg.SetPixel(i, j, Color.red);
-                        }
-                    }
-                }
-
                 var sitePosition = m_camera.ScreenToWorldPoint(generatedSiteKeyValuePair.Value.Coordinate+_mapData.m_startPosition);
                 sitePosition.z = -1;
                 var item = Instantiate(m_sitePrefab, m_container);
