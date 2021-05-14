@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 8510803824242994787}
   - component: {fileID: 3563877332538063077}
   m_Layer: 0
-  m_Name: highlight (1)
+  m_Name: highlight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -115,7 +115,7 @@ GameObject:
   - component: {fileID: 5695575227309068467}
   - component: {fileID: 322972783786984386}
   m_Layer: 0
-  m_Name: Site2D
+  m_Name: Site
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

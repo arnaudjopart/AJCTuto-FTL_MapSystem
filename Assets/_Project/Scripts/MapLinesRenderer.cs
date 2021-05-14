@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace _Project.Scripts
 {
-    public class MinimapLinesRenderer : MonoBehaviour
+    public class MapLinesRenderer : MonoBehaviour
     {
         public GameObject m_linePrefab;
         public Transform m_container;
@@ -12,7 +12,7 @@ namespace _Project.Scripts
     
         private readonly List<LineRenderer> m_lineRenderers= new List<LineRenderer>();
 
-        public void DrawLines(Vector2 _arg0Coord, List<Vector2> _neighborSitesPositions)
+        public void DrawLines(Vector2 _selectedSitePosition, List<Vector2> _neighborSitesPositions)
         {
             for (var i = m_lineRenderers.Count; i < _neighborSitesPositions.Count; i++)
             {
@@ -25,7 +25,7 @@ namespace _Project.Scripts
 
             for (var i = 0; i < _neighborSitesPositions.Count; i++)
             {
-                var startPosition = new Vector3(_arg0Coord.x, _arg0Coord.y);
+                var startPosition = new Vector3(_selectedSitePosition.x, _selectedSitePosition.y);
                 var endPosition = new Vector3(_neighborSitesPositions[i].x, _neighborSitesPositions[i].y);
             
                 m_lineRenderers[i].SetPositions(new[]
@@ -45,6 +45,14 @@ namespace _Project.Scripts
             foreach (var VARIABLE in m_lineRenderers)
             {
                 VARIABLE.enabled = false;
+            }
+        }
+        
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                HideAllLines();
             }
         }
     }

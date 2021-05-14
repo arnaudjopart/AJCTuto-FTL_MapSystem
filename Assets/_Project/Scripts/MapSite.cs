@@ -4,7 +4,7 @@ using UnityEngine.Events;
 
 namespace _Project.Scripts
 {
-    public class MinimapSite: MonoBehaviour
+    public class MapSite: MonoBehaviour
     {
         public VoronoiDiagramGeneratedSite<Color> m_diagramSite;
         public GameObject m_onHoverAnim;

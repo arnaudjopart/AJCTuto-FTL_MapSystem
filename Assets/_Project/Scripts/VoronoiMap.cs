@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace _Project.Scripts
 {
-    public class Minimap : MonoBehaviour
+    public class VoronoiMap : MonoBehaviour
     {
         [Header("Main Camera")]
         public Camera m_camera;
@@ -27,9 +27,11 @@ namespace _Project.Scripts
         [Header("Prefabs And Container")]
         public GameObject m_sitePrefab;
         public Transform m_container;
+        public MeshRenderer m_cellsVisualizer;
 
+        private VoronoiDiagram<Color> m_diagram;
         private List<GameObject> m_sitesList;
-        private MinimapLinesRenderer m_minimapLinesRenderer;
+        private MapLinesRenderer m_mapLinesRenderer;
         private MapData m_mapData;
 
         private struct MapData
@@ -37,12 +39,11 @@ namespace _Project.Scripts
             public Vector2 m_startPosition;
             public Vector2 m_sizeInPixel;
             public Vector2 m_sizeInWorldSpace;
-
         }
 
         private void Awake()
         {
-            m_minimapLinesRenderer = GetComponent<MinimapLinesRenderer>();
+            m_mapLinesRenderer = GetComponent<MapLinesRenderer>();
         }
 
         private void Start()
@@ -52,16 +53,16 @@ namespace _Project.Scripts
 
         private void CreateMap()
         {
-            m_mapData = CreateMinimapArea(m_camera, m_widthMargin,m_heightMargin);
+            m_mapData = CreateMapArea(m_camera, m_widthMargin,m_heightMargin);
 
             m_currentSeed = m_keepCurrentSeed && !string.IsNullOrEmpty(m_currentSeed) ? m_currentSeed : GenerateSeed();
             
             List<Vector2> sites = GenerateSites(m_numberOfSites, m_currentSeed, m_mapData);
         
-            m_sitesList = GenerateMinimap(sites,m_mapData);
+            GenerateVoronoiMap(sites,m_mapData);
         }
         
-        private static MapData CreateMinimapArea(Camera _camera, float _widthMargin,float _heightMargin)
+        private static MapData CreateMapArea(Camera _camera, float _widthMargin,float _heightMargin)
         {
             var mapData = new MapData();
 
@@ -76,7 +77,7 @@ namespace _Project.Scripts
                 y = topRightCorner.y - bottomLeftCorner.y
             };
 
-            mapData.m_sizeInWorldSpace = new Vector2()
+            mapData.m_sizeInWorldSpace = new Vector2
             {
                 x = _camera.ScreenToWorldPoint(bottomRightCorner).x - _camera.ScreenToWorldPoint(bottomLeftCorner).x,
                 y = _camera.ScreenToWorldPoint(topRightCorner).y - _camera.ScreenToWorldPoint(bottomLeftCorner).y
@@ -107,24 +108,22 @@ namespace _Project.Scripts
             return sites;
         }
 
-        private List<GameObject> GenerateMinimap(List<Vector2> _sites, MapData _mapData)
+        private void GenerateVoronoiMap(List<Vector2> _coordonates, MapData _mapData)
         {
-           
             m_diagram = new VoronoiDiagram<Color>(new Rect(0,0, (int)_mapData.m_sizeInPixel.x, (int)_mapData.m_sizeInPixel.y));
-            
             var voronoiDiagramSites = new List<VoronoiDiagramSite<Color>>();
 
-            foreach (var site in _sites)
+            foreach (var coordinate in _coordonates)
             {
                 var color = new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
-                voronoiDiagramSites.Add(new VoronoiDiagramSite<Color>(site, color));
+                voronoiDiagramSites.Add(new VoronoiDiagramSite<Color>(coordinate, color));
             }
             
             m_diagram.AddSites(voronoiDiagramSites);
             m_diagram.GenerateSites(m_relaxationCycles);
 
             var index = 0;
-            var list = new List<GameObject>();
+            m_sitesList = new List<GameObject>();
             
             foreach (var generatedSiteKeyValuePair in m_diagram.GeneratedSites)
             {
@@ -133,44 +132,32 @@ namespace _Project.Scripts
                 var item = Instantiate(m_sitePrefab, m_container);
                 item.transform.position = sitePosition;
                 item.name = "MinimapSite_" + index;
-                list.Add(item);
+                m_sitesList.Add(item);
                 
-                var uiSite = item.GetComponent<MinimapSite>();
-                uiSite.m_onMouseEnterEvent.AddListener(HandleSiteSelection);
-                uiSite.m_onMouseExitEvent.AddListener(HandleSiteDeselection);
-                uiSite.m_diagramSite = generatedSiteKeyValuePair.Value;
+                var mapSite = item.GetComponent<MapSite>();
+                mapSite.m_onMouseEnterEvent.AddListener(HandleSiteSelection);
+                mapSite.m_onMouseExitEvent.AddListener(HandleSiteDeselection);
+                mapSite.m_diagramSite = generatedSiteKeyValuePair.Value;
                 
                 index++;
             }
             
             var outImg = new Texture2D((int)_mapData.m_sizeInPixel.x, (int)_mapData.m_sizeInPixel.y);
-            
             outImg.SetPixels(m_diagram.Get1DSampleArray().ToArray());
-            
             outImg.Apply();
-            m_cellsVisualizer.materials[0].mainTexture = outImg;
-
-            var visualizerWidth = _mapData.m_sizeInWorldSpace.x;
-            var visualizerheight = _mapData.m_sizeInWorldSpace.y;
             
-            m_cellsVisualizer.transform.localScale = new Vector3(visualizerWidth, visualizerheight, 1);
-
-            return list;
+            m_cellsVisualizer.materials[0].mainTexture = outImg;
+            m_cellsVisualizer.transform.localScale = new Vector3(_mapData.m_sizeInWorldSpace.x, _mapData.m_sizeInWorldSpace.y, 1);
+            
         }
-
         
-
-        public MeshRenderer m_cellsVisualizer;
-
-        private VoronoiDiagram<Color> m_diagram;
-
         private void HandleSiteSelection(VoronoiDiagramGeneratedSite<Color> _selectedSite)
         {
             var neighborSitesIndexes = _selectedSite.NeighborSites;
             var list = new List<Vector2>();
-            foreach (var VARIABLE in neighborSitesIndexes)
+            foreach (var index in neighborSitesIndexes)
             {
-                if (!m_diagram.GeneratedSites.TryGetValue(VARIABLE, out var site)) continue;
+                if (!m_diagram.GeneratedSites.TryGetValue(index, out var site)) continue;
                 
                 var position = m_camera.ScreenToWorldPoint(site.Coordinate+m_mapData.m_startPosition);
                 position.z = -1;
@@ -179,20 +166,24 @@ namespace _Project.Scripts
             var startPosition = m_camera.ScreenToWorldPoint(_selectedSite.Coordinate+m_mapData.m_startPosition);
             startPosition.z = -1;
             
-            m_minimapLinesRenderer.DrawLines(
+            m_mapLinesRenderer.DrawLines(
                 startPosition, list);
         }
         
         private void HandleSiteDeselection(VoronoiDiagramGeneratedSite<Color> _selectedSite)
         {
-            m_minimapLinesRenderer.HideAllLines();
+            m_mapLinesRenderer.HideAllLines();
         }
         
         private void Update()
         {
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                Clear();
+                foreach (var VARIABLE in m_sitesList)
+                {
+                    Destroy(VARIABLE.gameObject);
+                }
+                
                 CreateMap();
             }
             m_cellsVisualizer.gameObject.SetActive(m_showVisualizer);
@@ -200,12 +191,9 @@ namespace _Project.Scripts
 
         private void Clear()
         {
-            m_minimapLinesRenderer.HideAllLines();
-            foreach (var VARIABLE in m_sitesList)
-            {
-                Destroy(VARIABLE.gameObject);
-            }
-            m_sitesList.Clear();
+            m_mapLinesRenderer.HideAllLines();
+            
+            
         }
         
         private void OnDrawGizmos()
@@ -232,9 +220,6 @@ namespace _Project.Scripts
             Gizmos.DrawLine(bottomLeftCorner,bottomRightCorner);
             Gizmos.DrawLine(topRightCorner,topLeftCorner);
             Gizmos.DrawLine(bottomRightCorner,topRightCorner);
-
-            
-            
         }
     }
 }
