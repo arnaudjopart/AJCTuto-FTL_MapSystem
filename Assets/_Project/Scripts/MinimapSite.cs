@@ -1,10 +1,11 @@
 using csDelaunay;
+using PixelsForGlory.VoronoiDiagram;
 using UnityEngine;
 using UnityEngine.Events;
 
 public class MinimapSite: MonoBehaviour
 {
-    public Site m_diagramSite;
+    public VoronoiDiagramGeneratedSite<Color> m_diagramSite;
     public GameObject m_onHoverAnim;
     
     public SiteSelectionEvent m_onMouseEnterEvent;
@@ -31,4 +32,4 @@ public class MinimapSite: MonoBehaviour
     }
 }
 
-public class SiteSelectionEvent  : UnityEvent<Site> {}
+public class SiteSelectionEvent  : UnityEvent<VoronoiDiagramGeneratedSite<Color>> {}

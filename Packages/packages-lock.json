@@ -1,5 +1,21 @@
 {
   "dependencies": {
+    "com.pixelsforglory.extensions": {
+      "version": "https://github.com/PixelsForGlory/Extensions.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "207ec619772f016250735ad3665b2fd274c8e192"
+    },
+    "com.pixelsforglory.voronoidiagram": {
+      "version": "https://github.com/PixelsForGlory/VoronoiDiagram.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.pixelsforglory.extensions": "1.0.10"
+      },
+      "hash": "125d1cf5b857c6d912dd546aa0b9e0ce935f6b80"
+    },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
       "depth": 0,

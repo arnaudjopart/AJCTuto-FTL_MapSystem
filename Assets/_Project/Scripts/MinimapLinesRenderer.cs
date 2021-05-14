@@ -11,9 +11,9 @@ public class MinimapLinesRenderer : MonoBehaviour
     
     private readonly List<LineRenderer> m_lineRenderers= new List<LineRenderer>();
 
-    public void DrawLines(Vector2f _arg0Coord, List<Site> _neighborSites)
+    public void DrawLines(Vector2 _arg0Coord, List<Vector2> _neighborSitesPositions)
     {
-        for (var i = m_lineRenderers.Count; i < _neighborSites.Count; i++)
+        for (var i = m_lineRenderers.Count; i < _neighborSitesPositions.Count; i++)
         {
             var line = Instantiate(m_linePrefab, m_container);
 
@@ -22,10 +22,10 @@ public class MinimapLinesRenderer : MonoBehaviour
             m_lineRenderers.Add(newLineRenderer);
         }
 
-        for (var i = 0; i < _neighborSites.Count; i++)
+        for (var i = 0; i < _neighborSitesPositions.Count; i++)
         {
             var startPosition = new Vector3(_arg0Coord.x, _arg0Coord.y);
-            var endPosition = new Vector3(_neighborSites[i].Coord.x, _neighborSites[i].Coord.y);
+            var endPosition = new Vector3(_neighborSitesPositions[i].x, _neighborSitesPositions[i].y);
             
             m_lineRenderers[i].SetPositions(new[]
             {
