@@ -35,7 +35,8 @@ namespace _Project.Scripts
         private struct MapData
         {
             public Vector2 m_startPosition;
-            public Vector2 m_size;
+            public Vector2 m_sizeInPixel;
+            public Vector2 m_sizeInWorldSpace;
 
         }
 
@@ -66,12 +67,19 @@ namespace _Project.Scripts
 
             var bottomLeftCorner = _camera.ViewportToScreenPoint(new Vector2(0, 0)+ new Vector2(_widthMargin, +_heightMargin));
             var topRightCorner = _camera.ViewportToScreenPoint(new Vector2(1, 1)+ new Vector2(-_widthMargin,-_heightMargin));
+            var bottomRightCorner = _camera.ViewportToScreenPoint(new Vector2(1, 0)+ new Vector2(-_widthMargin,_heightMargin));
 
             mapData.m_startPosition = bottomLeftCorner;
-            mapData.m_size = new Vector2
+            mapData.m_sizeInPixel = new Vector2
             {
                 x = topRightCorner.x - bottomLeftCorner.x, 
                 y = topRightCorner.y - bottomLeftCorner.y
+            };
+
+            mapData.m_sizeInWorldSpace = new Vector2()
+            {
+                x = _camera.ScreenToWorldPoint(bottomRightCorner).x - _camera.ScreenToWorldPoint(bottomLeftCorner).x,
+                y = _camera.ScreenToWorldPoint(topRightCorner).y - _camera.ScreenToWorldPoint(bottomLeftCorner).y
             };
         
             return mapData;
@@ -90,8 +98,8 @@ namespace _Project.Scripts
         
             for(var i = 0; i < _nbOfSites; i++)
             {
-                var randomX = pseudoRandom.Next(0, 100)*.01f*_data.m_size.x;
-                var randomY = pseudoRandom.Next(0, 100)*.01f*_data.m_size.y;
+                var randomX = pseudoRandom.Next(0, 100)*.01f*_data.m_sizeInPixel.x;
+                var randomY = pseudoRandom.Next(0, 100)*.01f*_data.m_sizeInPixel.y;
 
                 var position = new Vector2(randomX, randomY);
                 sites.Add(position);
@@ -101,10 +109,8 @@ namespace _Project.Scripts
 
         private List<GameObject> GenerateMinimap(List<Vector2> _sites, MapData _mapData)
         {
-            var widthInPixel = (int)_mapData.m_size.x;
-            var heightInPixel = (int) _mapData.m_size.y;
-            
-            m_diagram = new VoronoiDiagram<Color>(new Rect(0,0, widthInPixel, heightInPixel));
+           
+            m_diagram = new VoronoiDiagram<Color>(new Rect(0,0, (int)_mapData.m_sizeInPixel.x, (int)_mapData.m_sizeInPixel.y));
             
             var voronoiDiagramSites = new List<VoronoiDiagramSite<Color>>();
 
@@ -117,10 +123,6 @@ namespace _Project.Scripts
             m_diagram.AddSites(voronoiDiagramSites);
             m_diagram.GenerateSites(m_relaxationCycles);
 
-            var outImg = new Texture2D(widthInPixel, heightInPixel);
-            
-            outImg.SetPixels(m_diagram.Get1DSampleArray().ToArray());
-            
             var index = 0;
             var list = new List<GameObject>();
             
@@ -141,9 +143,18 @@ namespace _Project.Scripts
                 index++;
             }
             
+            var outImg = new Texture2D((int)_mapData.m_sizeInPixel.x, (int)_mapData.m_sizeInPixel.y);
+            
+            outImg.SetPixels(m_diagram.Get1DSampleArray().ToArray());
+            
             outImg.Apply();
             m_cellsVisualizer.materials[0].mainTexture = outImg;
+
+            var visualizerWidth = _mapData.m_sizeInWorldSpace.x;
+            var visualizerheight = _mapData.m_sizeInWorldSpace.y;
             
+            m_cellsVisualizer.transform.localScale = new Vector3(visualizerWidth, visualizerheight, 1);
+
             return list;
         }
 
@@ -222,9 +233,8 @@ namespace _Project.Scripts
             Gizmos.DrawLine(topRightCorner,topLeftCorner);
             Gizmos.DrawLine(bottomRightCorner,topRightCorner);
 
-            var visualizerWidth = Vector3.Distance(topRightCorner, topLeftCorner);
-            var visualizerheight = Vector3.Distance(topRightCorner, bottomRightCorner);
-            m_cellsVisualizer.transform.localScale = new Vector3(visualizerWidth, visualizerheight, 1);
+            
+            
         }
     }
 }

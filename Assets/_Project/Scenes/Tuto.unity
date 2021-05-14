@@ -530,7 +530,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!64 &1404582764
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -642,12 +642,10 @@ MonoBehaviour:
   m_numberOfSites: 10
   m_currentSeed: 
   m_keepCurrentSeed: 0
-  m_widthMargin: 0.174
+  m_widthMargin: 0.33
   m_heightMargin: 0.179
   m_relaxationCycles: 1
   m_showVisualizer: 1
-  m_generateCells: 1
-  m_generateSitesPosition: 1
   m_sitePrefab: {fileID: 8938050517607727556, guid: a0150d76874f90f41baf1f2f18e2944a, type: 3}
   m_container: {fileID: 1286137694}
   m_cellsVisualizer: {fileID: 1404582765}
